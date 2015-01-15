@@ -88,6 +88,10 @@ function controls() {
 		cloud.dy += dY/hyp;
 	}
 }
+function touchEnded(){
+	mouseIsPressed = false;
+}
+
 function calculateFPS(){
 	fr.push(frameRate());
 	fr.shift();
