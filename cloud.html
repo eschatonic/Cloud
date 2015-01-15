@@ -1,0 +1,162 @@
+<html>
+<head>
+	<style>
+	*{
+		margin:0;
+		padding:0;
+		box-sizing:border-box;
+		overflow:hidden;
+	}
+	</style>
+
+	<script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+	<script src="http://p5js.org/js/p5.min.js"></script>
+</head>
+<body>
+<script>
+
+var cloud;
+var fps;
+var time = 0;
+var bg = {
+	offset:{
+		x:0,
+		y:0
+	},
+	clouds:[]
+}
+
+function Cloud(x,y,dx,dy,spreadX,spreadY,weight){
+	this.x = x,
+	this.y = y,
+	this.dx = dx,
+	this.dy = dy
+	this.spreadX = spreadX;
+	this.spreadY = spreadY;
+	this.weight = weight;
+}
+
+function setup(){
+	frameRate(30);
+	createCanvas(windowWidth,windowHeight);
+	background(0);
+	cloud = new Cloud(windowWidth/2,windowHeight/2,0,0,120,60,1);
+	for (var i=0;i<5;i++){
+		bg.clouds.push(new Cloud(windowWidth * Math.random(),windowHeight * Math.random()/2,0,0,120,60,Math.random() + 0.5));
+	}
+	fill(255);
+	fr = [0,0,0,0,0];
+	stroke(255);
+}
+function draw(){
+		time++;
+		
+		//background
+		background(33,142,181); //clear blue sky :)
+		calculateFPS();
+		text(Math.floor(fps) + "",10,20);
+		for (var bgCloud in bg.clouds){
+			moveCloud(bg.clouds[bgCloud],true);
+		};
+		drawBackground();
+		
+		//player
+		controls();
+		console.log(cloud)
+		moveCloud(cloud,false);
+		drawCloud(cloud,false);
+}
+
+function controls() {
+	if (keyIsDown(LEFT_ARROW)) cloud.dx -= fps/30;
+	if (keyIsDown(RIGHT_ARROW)) cloud.dx += fps/30;
+	if (keyIsDown(UP_ARROW)) cloud.dy -= 0.5 * fps/30;
+	if (keyIsDown(DOWN_ARROW)) cloud.dy += 0.5 * fps/30;
+}
+function calculateFPS(){
+	fr.push(frameRate());
+	fr.shift();
+	fps = (fr[0] + fr[1] + fr[2] + fr[3] + fr[4]) / 5
+}
+
+function moveCloud(cloud,bgCloud){
+	//movement
+	cloud.y += cloud.dy;
+	cloud.x += cloud.dx;
+	
+	cloud.x += wind("x") * cloud.weight;
+	cloud.y += wind("y") * cloud.weight;
+	
+	cloud.dx *= 0.95;
+	cloud.dy *= 0.95;
+		
+	if (cloud.dx < 0.3 && cloud.dx > -0.3) cloud.dx = 0;
+	if (cloud.dy < 0.3 && cloud.dy > -0.3) cloud.dy = 0;
+	
+	//boundaries
+	if (!bgCloud){
+		if (cloud.x < windowWidth/4){
+			bg.offset.x -= (windowWidth/4 - cloud.x)
+			cloud.x = windowWidth/4;
+		} else if (cloud.x > 3/4 * windowWidth){
+			bg.offset.x += (cloud.x - (windowWidth * 3/4))
+			cloud.x = 3/4 * windowWidth;
+		}	
+		if (cloud.y < windowHeight/4){
+			cloud.y = windowHeight/4;
+		} else if (cloud.y > 3/4 * windowHeight){
+			cloud.y = 3/4 * windowHeight;
+		}
+	} else {
+		if (cloud.x < 0 - cloud.spreadX/2){
+			cloud.x = windowWidth + cloud.spreadX/2;
+			cloud.y = windowHeight * Math.random()/2;
+		} else if (cloud.x > windowWidth + cloud.spreadX/2){
+			cloud.x = 0 - cloud.spreadX/2;
+			cloud.y = windowHeight * Math.random()/2;
+		}
+		if (cloud.y < 0){
+			cloud.y = 0;
+		} else if (cloud.y > 3/4 * windowHeight){
+			cloud.y = 3/4 * windowHeight;
+		}
+	}
+}
+function wind(dimension){
+	if (dimension === "x"){
+		return (noise(time/500) - 0.5) * 5;
+	} else if (dimension === "y"){
+		//return noise(time/500) - 0.5;
+		return 0;
+	}
+}
+
+function drawCloud(cloud,bgOffset){
+	noStroke();
+	fill(255,255,255,50);
+	for (var i=0; i<100; i++){
+		var offsetX = noise(i + time/1000) * cloud.spreadX - cloud.spreadX/2;
+		var offsetY = noise(i + 20000 + time/1000) * cloud.spreadY - cloud.spreadY/2;
+		if (!bgOffset){
+			ellipse(cloud.x + offsetX,cloud.y + offsetY,20,20);
+		} else {
+			ellipse(cloud.x + offsetX - bg.offset.x,cloud.y + offsetY - bg.offset.y,20,20);
+		}
+	}
+}
+function drawBackground(){
+	stroke(50,200,50);
+	var spacing = 10;
+	var w = windowWidth / spacing;
+	var h = windowHeight / spacing;
+	for (var i=1;i<w;i++){
+		line(windowWidth * i/w,windowHeight,windowWidth * i/w,noise((bg.offset.x / 100) + i/w * spacing) * windowHeight/3 + windowHeight * 2/3);
+	}
+	for (var cloud in bg.clouds){
+		drawCloud(bg.clouds[cloud],true);
+	}
+}
+
+</script>
+</body>
+</html>
