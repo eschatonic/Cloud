@@ -41,8 +41,8 @@ function setup(){
 	createCanvas(windowWidth,windowHeight);
 	background(0);
 	cloud = new Cloud(windowWidth/2,windowHeight/2,0,0,120,60,1);
-	for (var i=0;i<5;i++){
-		bg.clouds.push(new Cloud(windowWidth * Math.random(),windowHeight * Math.random()/2,0,0,120,60,Math.random() + 0.5));
+	for (var i=0;i<8;i++){
+		bg.clouds.push(new Cloud(windowWidth * Math.random(),windowHeight * Math.random()/2,0,0,120 + (Math.random() * 40),50 + (Math.random() * 40),Math.random() + 0.5));
 	}
 	fill(255);
 	fr = [0,0,0,0,0];
@@ -134,13 +134,13 @@ function wind(dimension){
 function drawCloud(cloud,bgOffset){
 	noStroke();
 	fill(255,255,255,50);
-	for (var i=0; i<100; i++){
-		var offsetX = noise(i + time/1000) * cloud.spreadX - cloud.spreadX/2;
-		var offsetY = noise(i + 20000 + time/1000) * cloud.spreadY - cloud.spreadY/2;
+	for (var i=0; i<cloud.spreadX/2; i++){
+		var offsetX = noise(i + time/1000 + cloud.weight) * cloud.spreadX - cloud.spreadX/2;
+		var offsetY = noise(i + 20000 + time/1000 + cloud.weight) * cloud.spreadY - cloud.spreadY/2;
 		if (!bgOffset){
-			ellipse(cloud.x + offsetX,cloud.y + offsetY,20,20);
+			ellipse(cloud.x + offsetX,cloud.y + offsetY,30,30);
 		} else {
-			ellipse(cloud.x + offsetX - bg.offset.x,cloud.y + offsetY - bg.offset.y,20,20);
+			ellipse(cloud.x + offsetX - bg.offset.x,cloud.y + offsetY - bg.offset.y,30,30);
 		}
 	}
 }
