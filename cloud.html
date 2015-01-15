@@ -108,11 +108,11 @@ function moveCloud(cloud,bgCloud){
 			cloud.y = 3/4 * windowHeight;
 		}
 	} else {
-		if (cloud.x < 0 - cloud.spreadX/2){
-			cloud.x = windowWidth + cloud.spreadX/2;
+		if (cloud.x < 0 - cloud.spreadX/2 + bg.offset.x){
+			cloud.x = windowWidth + cloud.spreadX/2 + bg.offset.x;
 			cloud.y = windowHeight * Math.random()/2;
-		} else if (cloud.x > windowWidth + cloud.spreadX/2){
-			cloud.x = 0 - cloud.spreadX/2;
+		} else if (cloud.x > windowWidth + cloud.spreadX/2 + bg.offset.x){
+			cloud.x = 0 - cloud.spreadX/2 + bg.offset.x;
 			cloud.y = windowHeight * Math.random()/2;
 		}
 		if (cloud.y < 0){
