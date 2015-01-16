@@ -8,9 +8,11 @@
 		overflow:hidden;
 	}
 	</style>
-
+	
+	<link href='http://fonts.googleapis.com/css?family=Montserrat' rel='stylesheet' type='text/css'>
 	<script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
-	<script src="http://p5js.org/js/p5.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.3.16/p5.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.3.16/addons/p5.sound.min.js"></script>
 </head>
 <body>
 <script>
@@ -19,11 +21,16 @@ var cloud;
 var fps;
 var time = 0;
 var bg = {
+	menu:true,
 	offset:{
 		x:0,
 		y:0
 	},
 	clouds:[]
+}
+var music = {};
+var debug = {
+	music:true
 }
 
 function Cloud(x,y,dx,dy,spreadX,spreadY,weight){
@@ -36,11 +43,20 @@ function Cloud(x,y,dx,dy,spreadX,spreadY,weight){
 	this.weight = weight;
 }
 
+function preload(){
+	if (debug.music){
+		music.menu = loadSound('Feather Waltz.mp3');
+	}
+}
+
 function setup(){
+	if (debug.music){
+		music.menu.play();
+	}
 	frameRate(30);
 	createCanvas(windowWidth,windowHeight);
 	background(0);
-	cloud = new Cloud(windowWidth/2,windowHeight/2,0,0,200,100,1);
+	cloud = new Cloud(windowWidth/2,windowHeight/2,0,0,220,100,1);
 	for (var i=0;i<8;i++){
 		bg.clouds.push(new Cloud(
 			windowWidth * Math.random(),
@@ -67,6 +83,7 @@ function draw(){
 			moveCloud(bg.clouds[bgCloud],true);
 		};
 		drawBackground();
+		if (bg.menu) drawMenu();
 		
 		//player
 		controls();
@@ -75,17 +92,23 @@ function draw(){
 }
 
 function controls() {
-	if (keyIsDown(LEFT_ARROW)) cloud.dx -= fps/30;
-	if (keyIsDown(RIGHT_ARROW)) cloud.dx += fps/30;
-	if (keyIsDown(UP_ARROW)) cloud.dy -= 0.5 * fps/30;
-	if (keyIsDown(DOWN_ARROW)) cloud.dy += 0.5 * fps/30;
-	
-	if (mouseIsPressed){
-		var dX = mouseX - cloud.x;
-		var dY = mouseY - cloud.y;
-		var hyp = Math.sqrt(dX*dX + dY*dY);
-		cloud.dx += dX/hyp;
-		cloud.dy += dY/hyp;
+	if (!bg.menu){
+		if (keyIsDown(LEFT_ARROW)) cloud.dx -= fps/30;
+		if (keyIsDown(RIGHT_ARROW)) cloud.dx += fps/30;
+		if (keyIsDown(UP_ARROW)) cloud.dy -= 0.5 * fps/30;
+		if (keyIsDown(DOWN_ARROW)) cloud.dy += 0.5 * fps/30;
+		
+		if (mouseIsPressed){
+			var dX = mouseX - cloud.x;
+			var dY = mouseY - cloud.y;
+			var hyp = Math.sqrt(dX*dX + dY*dY);
+			cloud.dx += dX/hyp;
+			cloud.dy += dY/hyp;
+		}
+	} else {
+		if (keyIsPressed || mouseIsPressed){
+			bg.menu = false;
+		}
 	}
 }
 function touchEnded(){
@@ -110,8 +133,10 @@ function moveCloud(cloud,bgCloud){
 	cloud.y += cloud.dy;
 	cloud.x += cloud.dx;
 	
-	cloud.x += wind("x") * cloud.weight;
-	cloud.y += wind("y") * cloud.weight;
+	if (bgCloud || !bg.menu){
+		cloud.x += wind("x") * cloud.weight;
+		cloud.y += wind("y") * cloud.weight;
+	}
 	
 	cloud.dx *= 0.95;
 	cloud.dy *= 0.95;
@@ -173,7 +198,7 @@ function drawCloud(cloud,bgOffset){
 function drawBackground(){
 	//stroke(0);
 	noStroke();
-	fill(100)
+	fill(100);
 	var spacing = 10;
 	var w = windowWidth / spacing;
 	var h = windowHeight / spacing;
@@ -192,6 +217,18 @@ function drawBackground(){
 	for (var cloud in bg.clouds){
 		drawCloud(bg.clouds[cloud],true);
 	}
+}
+function drawMenu(){
+	noStroke();
+	fill(255);
+	textSize(120);
+	//textStyle(BOLD);
+	textAlign(CENTER);
+	textFont("Montserrat");
+	text("CLOUD",windowWidth/2+10,windowHeight/2-50)
+	textSize(20);
+	text("by dhmstark",windowWidth/2,windowHeight/2+60)
+	textSize(14);
 }
 
 </script>
