@@ -33,8 +33,11 @@ var music = {
 	track:{},
 	tracks:{
 		unloaded:[
+			"music/Avec Soin.mp3",
+			"music/Pensif.mp3",
+			"music/Calmant.mp3",
 			"music/Facile.mp3",
-			"music/Calmant.mp3"
+			"music/Pepper's Theme.mp3"
 		],
 		loaded:[]
 	}
@@ -156,6 +159,7 @@ function loadTrack(){
 	if (music.tracks.unloaded.length > 0){
 		var track = music.tracks.unloaded[Math.floor(music.tracks.unloaded.length * Math.random())];
 		music.tracks.loaded.push(loadSound(track,function(){
+			console.log("Loaded " + music.tracks.loaded[music.tracks.loaded.length-1].url);
 			loadTrack();
 		}));
 		music.tracks.unloaded.splice(music.tracks.unloaded.indexOf(track),1);
