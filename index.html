@@ -28,7 +28,12 @@ var bg = {
 	},
 	clouds:[]
 }
-var music = {};
+var music = {
+	current:{
+		isPlaying:false,
+		track:{}
+	}
+};
 var debug = {
 	music:true
 }
@@ -51,7 +56,9 @@ function preload(){
 
 function setup(){
 	if (debug.music){
-		music.menu.play();
+		music.current.track = music.menu;
+		music.current.track.play();
+		music.current.isPlaying = true;
 	}
 	frameRate(30);
 	createCanvas(windowWidth,windowHeight);
@@ -106,13 +113,37 @@ function controls() {
 			cloud.dy += dY/hyp;
 		}
 	} else {
-		if (keyIsPressed || mouseIsPressed){
-			bg.menu = false;
+		if ((keyIsPressed || mouseIsPressed) && !keyIsDown(77)){
+			if (!(mouseX > windowWidth - 100 && mouseY > windowHeight - 100)){
+				bg.menu = false;
+			}
 		}
+	}
+}
+function keyPressed(){
+	if (keyCode === 77){
+		toggleMusic();
 	}
 }
 function touchEnded(){
 	mouseIsPressed = false;
+}
+function mouseClicked(){
+	if (mouseX > windowWidth - 100 && mouseY > windowHeight - 100){
+		toggleMusic();
+	}
+}
+
+function toggleMusic(){
+	music.current.isPlaying ? pauseMusic() : resumeMusic();
+}
+function pauseMusic(){
+	music.current.track.pause()
+	music.current.isPlaying = false;
+}
+function resumeMusic(){
+	music.current.track.play()
+	music.current.isPlaying = true;
 }
 
 function calculateFPS(){
