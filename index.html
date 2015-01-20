@@ -29,9 +29,14 @@ var bg = {
 	clouds:[]
 }
 var music = {
-	current:{
-		isPlaying:false,
-		track:{}
+	isPlaying:false,
+	track:{},
+	tracks:{
+		unloaded:[
+			"music/Facile.mp3",
+			"music/Calmant.mp3"
+		],
+		loaded:[]
 	}
 };
 var debug = {
@@ -50,15 +55,16 @@ function Cloud(x,y,dx,dy,spreadX,spreadY,weight){
 
 function preload(){
 	if (debug.music){
-		music.menu = loadSound('Feather Waltz.mp3');
+		music.menu = loadSound('music/Feather Waltz.mp3');
 	}
 }
 
 function setup(){
 	if (debug.music){
-		music.current.track = music.menu;
-		music.current.track.play();
-		music.current.isPlaying = true;
+		music.track = music.menu;
+		music.track.play();
+		music.isPlaying = true;
+		loadTrack();
 	}
 	frameRate(30);
 	createCanvas(windowWidth,windowHeight);
@@ -91,6 +97,7 @@ function draw(){
 		};
 		drawBackground();
 		if (bg.menu) drawMenu();
+		checkMusic();
 		
 		//player
 		controls();
@@ -135,15 +142,38 @@ function mouseClicked(){
 }
 
 function toggleMusic(){
-	music.current.isPlaying ? pauseMusic() : resumeMusic();
+	music.isPlaying ? pauseMusic() : resumeMusic();
 }
 function pauseMusic(){
-	music.current.track.pause()
-	music.current.isPlaying = false;
+	music.track.pause()
+	music.isPlaying = false;
 }
 function resumeMusic(){
-	music.current.track.play()
-	music.current.isPlaying = true;
+	music.track.play()
+	music.isPlaying = true;
+}
+function loadTrack(){
+	if (music.tracks.unloaded.length > 0){
+		var track = music.tracks.unloaded[Math.floor(music.tracks.unloaded.length * Math.random())];
+		music.tracks.loaded.push(loadSound(track,function(){
+			loadTrack();
+		}));
+		music.tracks.unloaded.splice(music.tracks.unloaded.indexOf(track),1);
+	}
+}
+function checkMusic(){
+	if (music.isPlaying){
+		if (music.track.currentTime() < music.track.duration() - 1){
+			return true
+		} else {
+			pickNewTrack();
+		}
+	}
+}
+function pickNewTrack(){
+	var track = music.tracks.loaded[Math.floor(music.tracks.loaded.length * Math.random())];
+	music.track = track;
+	music.track.play();
 }
 
 function calculateFPS(){
