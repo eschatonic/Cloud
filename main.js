@@ -205,8 +205,8 @@ function drawBackground(){
 		var heightB = noise(Math.floor(i+1 + (bg.offset.x/spacing)) * scaleFactor) * windowHeight * 1/4 + windowHeight * 3/4;
 		quad(
 			i * spacing - fracOffset, heightA,
-			(i+1)*spacing - fracOffset,heightB,
-			(i+1)*spacing - fracOffset, windowHeight,
+			(i+1)*spacing - fracOffset + 1,heightB,
+			(i+1)*spacing - fracOffset + 1, windowHeight,
 			i * spacing - fracOffset, windowHeight
 		);
 	}
