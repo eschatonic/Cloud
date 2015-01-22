@@ -8,10 +8,11 @@ var bg = {
 		x:0,
 		y:0
 	},
+	land:[],
 	clouds:[]
 }
 var debug = {
-	music:false
+	music:true
 }
 
 function Cloud(x,y,dx,dy,spreadX,spreadY,weight){
@@ -192,23 +193,27 @@ function drawCloud(cloud,bgOffset){
 	}
 }
 function drawBackground(){
-	//stroke(0);
 	noStroke();
 	fill(100);
-	var spacing = 10;
-	var w = windowWidth / spacing;
-	var h = windowHeight / spacing;
-	for (var i=1;i<=w;i++){
+	
+	var spacing = 20,
+		scaleFactor = 0.1,
+		fracOffset = bg.offset.x % spacing,
+		w = Math.ceil(windowWidth/spacing)
+	for (var i=-1;i<=w;i++){
+		var heightA = noise(Math.floor(i + (bg.offset.x/spacing)) * scaleFactor) * windowHeight * 1/4 + windowHeight * 3/4;
+		var heightB = noise(Math.floor(i+1 + (bg.offset.x/spacing)) * scaleFactor) * windowHeight * 1/4 + windowHeight * 3/4;
 		quad(
-			windowWidth * i/w,noise((bg.offset.x / 100) + i/w * spacing) * windowHeight/4 + windowHeight * 3/4,
-			windowWidth * (i-1)/w,noise((bg.offset.x / 100) + (i-1)/w * spacing) * windowHeight/4 + windowHeight * 3/4,
-			windowWidth * (i-1)/w,windowHeight,
-			windowWidth * i/w,windowHeight
+			i * spacing - fracOffset, heightA,
+			(i+1)*spacing - fracOffset,heightB,
+			(i+1)*spacing - fracOffset, windowHeight,
+			i * spacing - fracOffset, windowHeight
 		);
 	}
 	for (var cloud in bg.clouds){
 		drawCloud(bg.clouds[cloud],true);
 	}
+	fill(255);
 }
 function drawMenu(){
 	noStroke();
