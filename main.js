@@ -16,7 +16,7 @@ var bg = {
 var debug = true;
 
 function Cloud(x,y,dx,dy,spreadX,spreadY,weight,raining){
-	this.x = x,
+	this.x = x, //position on screen, not absolute
 	this.y = y,
 	this.dx = dx,
 	this.dy = dy
@@ -26,7 +26,7 @@ function Cloud(x,y,dx,dy,spreadX,spreadY,weight,raining){
 	this.raining = raining;
 }
 function Raindrop(x,y,variance){
-	this.x = x + (Math.random() - 0.5) * variance;
+	this.x = x + (Math.random() - 0.5) * variance; //position on screen, not absolute
 	this.y = y;
 	this.length = Math.random() * 10 + 10;
 }
@@ -98,6 +98,7 @@ function draw(){
 
 function controls() {
 	if (!bg.menu){
+		cloud.raining = false;
 		if (keyIsDown(LEFT_ARROW)) cloud.dx -= fps/30;
 		if (keyIsDown(RIGHT_ARROW)) cloud.dx += fps/30;
 		if (keyIsDown(UP_ARROW)) cloud.dy -= 0.5 * fps/30;
@@ -108,8 +109,13 @@ function controls() {
 			var dX = mouseX - cloud.x;
 			var dY = mouseY - cloud.y;
 			var hyp = Math.sqrt(dX*dX + dY*dY);
-			cloud.dx += dX/hyp;
-			cloud.dy += dY/hyp;
+			
+			if (hyp < cloud.spreadX/4){
+				cloud.raining = true;
+			} else {
+				cloud.dx += dX/hyp;
+				cloud.dy += dY/hyp;
+			}
 		}
 	} else {
 		if ((keyIsPressed || mouseIsPressed) && !keyIsDown(77)){
@@ -159,9 +165,11 @@ function moveCloud(cloud,bgCloud){
 	if (!bgCloud){
 		if (cloud.x < windowWidth/4){
 			bg.offset.x -= (windowWidth/4 - cloud.x)
+			offsetRaindrops((windowWidth/4 - cloud.x) * -1);
 			cloud.x = windowWidth/4;
 		} else if (cloud.x > 3/4 * windowWidth){
 			bg.offset.x += (cloud.x - (windowWidth * 3/4))
+			offsetRaindrops((cloud.x - (windowWidth * 3/4)))
 			cloud.x = 3/4 * windowWidth;
 		}	
 		if (cloud.y < 0){
@@ -187,6 +195,11 @@ function moveCloud(cloud,bgCloud){
 	//raining
 	if (cloud.raining){
 		bg.raindrops.push(new Raindrop(cloud.x,cloud.y,cloud.spreadX/4));
+	}
+}
+function offsetRaindrops(offset){
+	for (var raindrop in bg.raindrops){
+		bg.raindrops[raindrop].x -= offset;
 	}
 }
 function moveRaindrop(raindrop){
@@ -217,7 +230,7 @@ function drawCloud(cloud,bgOffset){
 	}
 }
 function drawRaindrop(raindrop){
-	stroke(255);
+	stroke(128, 218, 235);
 	line(raindrop.x,raindrop.y,raindrop.x,raindrop.y+raindrop.length);
 	noStroke();
 }
