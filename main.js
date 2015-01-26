@@ -106,7 +106,7 @@ function controls() {
 		cloud.raining = keyIsDown(32);
 		
 		if (mouseIsPressed){
-			var dX = mouseX - cloud.x;
+			var dX = mouseX - cloud.x + bg.offset.x;
 			var dY = mouseY - cloud.y;
 			var hyp = Math.sqrt(dX*dX + dY*dY);
 			
@@ -162,15 +162,12 @@ function moveCloud(cloud,bgCloud){
 	if (cloud.dy < 0.3 && cloud.dy > -0.3) cloud.dy = 0;
 	
 	//boundaries
+	var cloudScreenX = cloud.x - bg.offset.x;
 	if (!bgCloud){
-		if (cloud.x < windowWidth/4){
-			bg.offset.x -= (windowWidth/4 - cloud.x)
-			offsetRaindrops((windowWidth/4 - cloud.x) * -1);
-			cloud.x = windowWidth/4;
-		} else if (cloud.x > 3/4 * windowWidth){
-			bg.offset.x += (cloud.x - (windowWidth * 3/4))
-			offsetRaindrops((cloud.x - (windowWidth * 3/4)))
-			cloud.x = 3/4 * windowWidth;
+		if (cloudScreenX < windowWidth/4){
+			bg.offset.x -= (windowWidth/4 - cloudScreenX)
+		} else if (cloudScreenX > 3/4 * windowWidth){
+			bg.offset.x += (cloudScreenX - (windowWidth * 3/4));
 		}	
 		if (cloud.y < 0){
 			cloud.y = 0;
@@ -178,11 +175,11 @@ function moveCloud(cloud,bgCloud){
 			cloud.y = 3/4 * windowHeight;
 		}
 	} else {
-		if (cloud.x < 0 - cloud.spreadX/2 + bg.offset.x){
-			cloud.x = windowWidth + cloud.spreadX/2 + bg.offset.x;
+		if (cloudScreenX < 0 - cloud.spreadX/2){
+			cloud.x += windowWidth + cloud.spreadX;
 			cloud.y = windowHeight * Math.random()/2;
-		} else if (cloud.x > windowWidth + cloud.spreadX/2 + bg.offset.x){
-			cloud.x = 0 - cloud.spreadX/2 + bg.offset.x;
+		} else if (cloudScreenX > windowWidth + cloud.spreadX/2){
+			cloud.x -= windowWidth + cloud.spreadX;
 			cloud.y = windowHeight * Math.random()/2;
 		}
 		if (cloud.y < 0){
@@ -195,11 +192,6 @@ function moveCloud(cloud,bgCloud){
 	//raining
 	if (cloud.raining){
 		bg.raindrops.push(new Raindrop(cloud.x,cloud.y,cloud.spreadX/4));
-	}
-}
-function offsetRaindrops(offset){
-	for (var raindrop in bg.raindrops){
-		bg.raindrops[raindrop].x -= offset;
 	}
 }
 function moveRaindrop(raindrop){
@@ -223,7 +215,7 @@ function drawCloud(cloud,bgOffset){
 		var offsetX = (noise(i + time/1000 + cloud.weight*i) - 0.5) * (cloud.spreadX - cloud.spreadX/2)/cloud.weight;
 		var offsetY = (noise(i + 20000 + time/1000 + cloud.weight*10) - 0.5) * (cloud.spreadY - cloud.spreadY/2)/cloud.weight;
 		if (!bgOffset){
-			ellipse(cloud.x + offsetX,cloud.y + offsetY,30,30);
+			ellipse(cloud.x + offsetX - bg.offset.x,cloud.y + offsetY,30,30);
 		} else {
 			ellipse(cloud.x + offsetX - bg.offset.x,cloud.y + offsetY - bg.offset.y,30/cloud.weight,30/cloud.weight);
 		}
@@ -231,7 +223,7 @@ function drawCloud(cloud,bgOffset){
 }
 function drawRaindrop(raindrop){
 	stroke(128, 218, 235);
-	line(raindrop.x,raindrop.y,raindrop.x,raindrop.y+raindrop.length);
+	line(raindrop.x - bg.offset.x,raindrop.y,raindrop.x - bg.offset.x,raindrop.y+raindrop.length);
 	noStroke();
 }
 function drawBackground(){
