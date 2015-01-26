@@ -274,14 +274,14 @@ function drawGround(){
 			i * bg.spacing - fracOffset, windowHeight
 		);
 		
-		
-		if (bg.land[Math.floor(i + (bg.offset.x/bg.spacing))]){
+		var grass = bg.land[Math.floor(i + (bg.offset.x/bg.spacing))];
+		if (grass){
 			fill(0,255,0)
 			quad(
 				i * bg.spacing - fracOffset, heightA,
 				(i+1) * bg.spacing - fracOffset + 1, heightB,
-				(i+1) * bg.spacing - fracOffset + 1, heightB + bg.land[Math.floor(i + (bg.offset.x/bg.spacing)) - fracOffset],
-				i * bg.spacing - fracOffset, heightA + bg.land[Math.floor(i + (bg.offset.x/bg.spacing)) - fracOffset]
+				(i+1) * bg.spacing - fracOffset + 1, heightB + grass,
+				i * bg.spacing - fracOffset, heightA + grass
 			);
 			fill(100)
 		}
