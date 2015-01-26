@@ -2,6 +2,7 @@
 var cloud;
 var fps;
 var time = 0;
+var images = {}
 var bg = {
 	menu:true,
 	offset:{
@@ -11,9 +12,7 @@ var bg = {
 	land:[],
 	clouds:[]
 }
-var debug = {
-	music:true
-}
+var debug = true;
 
 function Cloud(x,y,dx,dy,spreadX,spreadY,weight){
 	this.x = x,
@@ -26,22 +25,25 @@ function Cloud(x,y,dx,dy,spreadX,spreadY,weight){
 }
 
 function preload(){
-	if (debug.music){
-		music.menu = loadSound('music/Feather Waltz.mp3');
-	}
 	frameRate(30);
 	createCanvas(windowWidth,windowHeight);
 	$('#defaultCanvas').css("visibility","");
 	textAlign(CENTER);
 	textSize(24);
 	loadingAnimation();
+	
+	if (!debug){
+		music.menu = loadSound('music/Feather Waltz.mp3');
+		images.mute = loadImage("mute.png");
+		images.play = loadImage("play.png");
+	}
 }
 
 function setup(){
 	textAlign(CENTER);
 	textSize(12);
 	loading.loaded = true;
-	if (debug.music){
+	if (!debug){
 		music.track = music.menu;
 		music.track.play();
 		music.isPlaying = true;
@@ -89,6 +91,7 @@ function controls() {
 		if (keyIsDown(RIGHT_ARROW)) cloud.dx += fps/30;
 		if (keyIsDown(UP_ARROW)) cloud.dy -= 0.5 * fps/30;
 		if (keyIsDown(DOWN_ARROW)) cloud.dy += 0.5 * fps/30;
+		if (keyIsDown(32)) console.log("spacebar");
 		
 		if (mouseIsPressed){
 			var dX = mouseX - cloud.x;
@@ -99,7 +102,7 @@ function controls() {
 		}
 	} else {
 		if ((keyIsPressed || mouseIsPressed) && !keyIsDown(77)){
-			if (!(mouseX > windowWidth - 100 && mouseY > windowHeight - 100)){
+			if (!(mouseX > windowWidth - 80 && mouseY > windowHeight - 80)){
 				bg.menu = false;
 			}
 		}
@@ -213,6 +216,12 @@ function drawBackground(){
 	for (var cloud in bg.clouds){
 		drawCloud(bg.clouds[cloud],true);
 	}
+	
+	if (!debug){
+		var soundImage = music.isPlaying ? images.play : images.mute;
+		image(soundImage,windowWidth-70,windowHeight-70,60,60);
+	}
+	
 	fill(255);
 }
 function drawMenu(){
@@ -222,6 +231,6 @@ function drawMenu(){
 	textFont("Montserrat");
 	text("CLOUD",windowWidth/2+10,windowHeight/2-50)
 	textSize(20);
-	text("by dhmstark",windowWidth/2,windowHeight/2+60)
+	text("by David Stark",windowWidth/2,windowHeight/2+60)
 	textSize(14);
 }
