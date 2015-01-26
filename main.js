@@ -217,7 +217,11 @@ function moveRaindrop(raindrop){
 		
 		if (raindrop.y > landHeight){
 			bg.raindrops.splice(bg.raindrops.indexOf(raindrop),1);
-			bg.land[Math.floor(i + (bg.offset.x/bg.spacing))] = true;
+			if (!bg.land[Math.floor(i + (bg.offset.x/bg.spacing))]){
+				bg.land[Math.floor(i + (bg.offset.x/bg.spacing))] = 1;
+			} else {
+				bg.land[Math.floor(i + (bg.offset.x/bg.spacing))] += 1/Math.sqrt(bg.land[Math.floor(i + (bg.offset.x/bg.spacing))]);
+			}
 		}
 	}
 }
@@ -245,7 +249,7 @@ function drawCloud(cloud,isBackgroundCloud){
 }
 function drawRaindrop(raindrop){
 	if (raindrop){
-		stroke(128, 218, 235);
+		stroke(128,218,235);
 		line(raindrop.x - bg.offset.x,raindrop.y,raindrop.x - bg.offset.x,raindrop.y+raindrop.length);
 		noStroke();
 	}
@@ -272,9 +276,14 @@ function drawGround(){
 		
 		
 		if (bg.land[Math.floor(i + (bg.offset.x/bg.spacing))]){
-			stroke(0,255,0)
-			line(i * bg.spacing - fracOffset, heightA, (i+1) * bg.spacing - fracOffset + 1, heightB);
-			noStroke();
+			fill(0,255,0)
+			quad(
+				i * bg.spacing - fracOffset, heightA,
+				(i+1) * bg.spacing - fracOffset + 1, heightB,
+				(i+1) * bg.spacing - fracOffset + 1, heightB + bg.land[Math.floor(i + (bg.offset.x/bg.spacing)) - fracOffset],
+				i * bg.spacing - fracOffset, heightA + bg.land[Math.floor(i + (bg.offset.x/bg.spacing)) - fracOffset]
+			);
+			fill(100)
 		}
 	}
 	fill(255);
