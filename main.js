@@ -75,12 +75,12 @@ function setup(){
 }
 function draw(){
 		time++;
+		checkMusic();
 		
 		//background
 		background(33,142,181); //clear blue sky :)
-		calculateFPS();
-		text(Math.floor(fps) + "",20,20);
 		
+		//objects
 		for (var raindrop in bg.raindrops){
 			moveRaindrop(bg.raindrops[raindrop]);
 			drawRaindrop(bg.raindrops[raindrop]);
@@ -89,9 +89,16 @@ function draw(){
 			moveCloud(bg.clouds[cloud],true);
 			drawCloud(bg.clouds[cloud],true);
 		}
-		drawBackground();
+		drawGround();
+		
+		//interface
+		if (!debug){
+			var soundImage = music.isPlaying ? images.play : images.mute;
+			image(soundImage,windowWidth-70,windowHeight-70,60,60);
+		}
 		if (bg.menu) drawMenu();
-		checkMusic();
+		calculateFPS();
+		text(Math.floor(fps) + "",20,20);
 		
 		//player
 		controls();
@@ -219,18 +226,19 @@ function drawCloud(cloud,isBackgroundCloud){
 		var offsetY = (noise(i + 20000 + time/1000 + cloud.weight*10) - 0.5) * (cloud.spreadY - cloud.spreadY/2)/cloud.weight;
 		if (!isBackgroundCloud){
 			ellipse(cloud.x + offsetX - bg.offset.x,cloud.y + offsetY,30,30);
-			console.log("hey");
 		} else {
 			ellipse(cloud.x + offsetX - bg.offset.x,cloud.y + offsetY,30/cloud.weight,30/cloud.weight);
 		}
 	}
 }
 function drawRaindrop(raindrop){
-	stroke(128, 218, 235);
-	line(raindrop.x - bg.offset.x,raindrop.y,raindrop.x - bg.offset.x,raindrop.y+raindrop.length);
-	noStroke();
+	if (raindrop){
+		stroke(128, 218, 235);
+		line(raindrop.x - bg.offset.x,raindrop.y,raindrop.x - bg.offset.x,raindrop.y+raindrop.length);
+		noStroke();
+	}
 }
-function drawBackground(){
+function drawGround(){
 	noStroke();
 	fill(100);
 	
@@ -248,12 +256,6 @@ function drawBackground(){
 			i * spacing - fracOffset, windowHeight
 		);
 	}
-	
-	if (!debug){
-		var soundImage = music.isPlaying ? images.play : images.mute;
-		image(soundImage,windowWidth-70,windowHeight-70,60,60);
-	}
-	
 	fill(255);
 }
 function drawMenu(){
