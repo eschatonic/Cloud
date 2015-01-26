@@ -9,6 +9,8 @@ var bg = {
 		x:0,
 		y:0
 	},
+	spacing:20,
+	scaleFactor:0.1,
 	land:[],
 	clouds:[],
 	raindrops:[]
@@ -81,6 +83,7 @@ function draw(){
 		background(33,142,181); //clear blue sky :)
 		
 		//objects
+		drawGround();
 		for (var raindrop in bg.raindrops){
 			moveRaindrop(bg.raindrops[raindrop]);
 			drawRaindrop(bg.raindrops[raindrop]);
@@ -89,7 +92,6 @@ function draw(){
 			moveCloud(bg.clouds[cloud],true);
 			drawCloud(bg.clouds[cloud],true);
 		}
-		drawGround();
 		
 		//interface
 		if (!debug){
@@ -207,7 +209,12 @@ function moveCloud(cloud,bgCloud){
 function moveRaindrop(raindrop){
 	raindrop.y += 10;
 	raindrop.x += wind("x");
-	if (raindrop.y > windowHeight) bg.raindrops.splice(bg.raindrops.indexOf(raindrop),1);
+	var scale = windowHeight * 1/4;
+	var shift = windowHeight * 3/4;
+	var i = (raindrop.x - bg.offset.x)/bg.spacing;
+	var landHeight = noise(Math.floor(i + (bg.offset.x/bg.spacing)) * bg.scaleFactor) * scale + shift;
+	
+	if (raindrop.y > landHeight) bg.raindrops.splice(bg.raindrops.indexOf(raindrop),1);
 }
 function wind(dimension){
 	if (dimension === "x"){
@@ -242,18 +249,20 @@ function drawGround(){
 	noStroke();
 	fill(100);
 	
-	var spacing = 20,
-		scaleFactor = 0.1,
-		fracOffset = bg.offset.x % spacing,
-		w = Math.ceil(windowWidth/spacing)
-	for (var i=-1;i<=w;i++){
-		var heightA = noise(Math.floor(i + (bg.offset.x/spacing)) * scaleFactor) * windowHeight * 1/4 + windowHeight * 3/4;
-		var heightB = noise(Math.floor(i+1 + (bg.offset.x/spacing)) * scaleFactor) * windowHeight * 1/4 + windowHeight * 3/4;
+	var scale = windowHeight * 1/4;
+	var shift = windowHeight * 3/4;
+	var fracOffset = bg.offset.x % bg.spacing;
+		
+	for (var i=-1,j=Math.ceil(windowWidth/bg.spacing)+1; i<j; i++){
+		
+		var heightA = noise(Math.floor(i + (bg.offset.x/bg.spacing)) * bg.scaleFactor) * scale + shift;
+		var heightB = noise(Math.floor(i+1 + (bg.offset.x/bg.spacing)) * bg.scaleFactor) * scale + shift;
+		
 		quad(
-			i * spacing - fracOffset, heightA,
-			(i+1)*spacing - fracOffset + 1,heightB,
-			(i+1)*spacing - fracOffset + 1, windowHeight,
-			i * spacing - fracOffset, windowHeight
+			i * bg.spacing - fracOffset, heightA,
+			(i+1) * bg.spacing - fracOffset + 1,heightB,
+			(i+1) * bg.spacing - fracOffset + 1, windowHeight,
+			i * bg.spacing - fracOffset, windowHeight
 		);
 	}
 	fill(255);
