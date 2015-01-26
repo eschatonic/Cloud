@@ -1,5 +1,5 @@
 
-var cloud;
+var playerCloud;
 var fps;
 var time = 0;
 var images = {}
@@ -56,7 +56,7 @@ function setup(){
 		music.isPlaying = true;
 		loadTrack();
 	}
-	cloud = new Cloud(windowWidth/2,windowHeight/2,0,0,250,100,1,false);
+	playerCloud = new Cloud(windowWidth/2,windowHeight/2,0,0,250,100,1,false);
 	for (var i=0;i<8;i++){
 		bg.clouds.push(new Cloud(
 			windowWidth * Math.random(),
@@ -80,11 +80,14 @@ function draw(){
 		background(33,142,181); //clear blue sky :)
 		calculateFPS();
 		text(Math.floor(fps) + "",20,20);
-		for (var bgCloud in bg.clouds){
-			moveCloud(bg.clouds[bgCloud],true);
-		};
-		for (var bgRaindrop in bg.raindrops){
-			moveRaindrop(bg.raindrops[bgRaindrop]);
+		
+		for (var raindrop in bg.raindrops){
+			moveRaindrop(bg.raindrops[raindrop]);
+			drawRaindrop(bg.raindrops[raindrop]);
+		}
+		for (var cloud in bg.clouds){
+			moveCloud(bg.clouds[cloud],true);
+			drawCloud(bg.clouds[cloud],true);
 		}
 		drawBackground();
 		if (bg.menu) drawMenu();
@@ -92,29 +95,29 @@ function draw(){
 		
 		//player
 		controls();
-		moveCloud(cloud,false);
-		drawCloud(cloud,false);
+		moveCloud(playerCloud,false);
+		drawCloud(playerCloud,false);
 }
 
 function controls() {
 	if (!bg.menu){
-		cloud.raining = false;
-		if (keyIsDown(LEFT_ARROW)) cloud.dx -= fps/30;
-		if (keyIsDown(RIGHT_ARROW)) cloud.dx += fps/30;
-		if (keyIsDown(UP_ARROW)) cloud.dy -= 0.5 * fps/30;
-		if (keyIsDown(DOWN_ARROW)) cloud.dy += 0.5 * fps/30;
-		cloud.raining = keyIsDown(32);
+		playerCloud.raining = false;
+		if (keyIsDown(LEFT_ARROW)) playerCloud.dx -= fps/30;
+		if (keyIsDown(RIGHT_ARROW)) playerCloud.dx += fps/30;
+		if (keyIsDown(UP_ARROW)) playerCloud.dy -= 0.5 * fps/30;
+		if (keyIsDown(DOWN_ARROW)) playerCloud.dy += 0.5 * fps/30;
+		playerCloud.raining = keyIsDown(32);
 		
 		if (mouseIsPressed){
-			var dX = mouseX - cloud.x + bg.offset.x;
-			var dY = mouseY - cloud.y;
+			var dX = mouseX - playerCloud.x + bg.offset.x;
+			var dY = mouseY - playerCloud.y;
 			var hyp = Math.sqrt(dX*dX + dY*dY);
 			
-			if (hyp < cloud.spreadX/4){
-				cloud.raining = true;
+			if (hyp < playerCloud.spreadX/4){
+				playerCloud.raining = true;
 			} else {
-				cloud.dx += dX/hyp;
-				cloud.dy += dY/hyp;
+				playerCloud.dx += dX/hyp;
+				playerCloud.dy += dY/hyp;
 			}
 		}
 	} else {
@@ -208,16 +211,17 @@ function wind(dimension){
 	}
 }
 
-function drawCloud(cloud,bgOffset){
+function drawCloud(cloud,isBackgroundCloud){
 	noStroke();
 	fill(255,255,255,50);
 	for (var i=0; i<cloud.spreadX/5; i++){
 		var offsetX = (noise(i + time/1000 + cloud.weight*i) - 0.5) * (cloud.spreadX - cloud.spreadX/2)/cloud.weight;
 		var offsetY = (noise(i + 20000 + time/1000 + cloud.weight*10) - 0.5) * (cloud.spreadY - cloud.spreadY/2)/cloud.weight;
-		if (!bgOffset){
+		if (!isBackgroundCloud){
 			ellipse(cloud.x + offsetX - bg.offset.x,cloud.y + offsetY,30,30);
+			console.log("hey");
 		} else {
-			ellipse(cloud.x + offsetX - bg.offset.x,cloud.y + offsetY - bg.offset.y,30/cloud.weight,30/cloud.weight);
+			ellipse(cloud.x + offsetX - bg.offset.x,cloud.y + offsetY,30/cloud.weight,30/cloud.weight);
 		}
 	}
 }
@@ -229,10 +233,6 @@ function drawRaindrop(raindrop){
 function drawBackground(){
 	noStroke();
 	fill(100);
-	
-	for (var raindrop in bg.raindrops){
-		drawRaindrop(bg.raindrops[raindrop]);
-	}
 	
 	var spacing = 20,
 		scaleFactor = 0.1,
@@ -247,9 +247,6 @@ function drawBackground(){
 			(i+1)*spacing - fracOffset + 1, windowHeight,
 			i * spacing - fracOffset, windowHeight
 		);
-	}
-	for (var cloud in bg.clouds){
-		drawCloud(bg.clouds[cloud],true);
 	}
 	
 	if (!debug){
