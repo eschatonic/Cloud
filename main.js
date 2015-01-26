@@ -10,11 +10,12 @@ var bg = {
 		y:0
 	},
 	land:[],
-	clouds:[]
+	clouds:[],
+	raindrops:[]
 }
 var debug = true;
 
-function Cloud(x,y,dx,dy,spreadX,spreadY,weight){
+function Cloud(x,y,dx,dy,spreadX,spreadY,weight,raining){
 	this.x = x,
 	this.y = y,
 	this.dx = dx,
@@ -22,6 +23,12 @@ function Cloud(x,y,dx,dy,spreadX,spreadY,weight){
 	this.spreadX = spreadX;
 	this.spreadY = spreadY;
 	this.weight = weight;
+	this.raining = raining;
+}
+function Raindrop(x,y,variance){
+	this.x = x + (Math.random() - 0.5) * variance;
+	this.y = y;
+	this.length = Math.random() * 10 + 10;
 }
 
 function preload(){
@@ -49,7 +56,7 @@ function setup(){
 		music.isPlaying = true;
 		loadTrack();
 	}
-	cloud = new Cloud(windowWidth/2,windowHeight/2,0,0,220,100,1);
+	cloud = new Cloud(windowWidth/2,windowHeight/2,0,0,250,100,1,false);
 	for (var i=0;i<8;i++){
 		bg.clouds.push(new Cloud(
 			windowWidth * Math.random(),
@@ -58,7 +65,8 @@ function setup(){
 			0,
 			250 + (Math.random() * 125),
 			150 + (Math.random() * 60),
-			Math.random()*0.6+0.4
+			Math.random()*0.6+0.4,
+			false
 		));
 	}
 	fill(255);
@@ -75,6 +83,9 @@ function draw(){
 		for (var bgCloud in bg.clouds){
 			moveCloud(bg.clouds[bgCloud],true);
 		};
+		for (var bgRaindrop in bg.raindrops){
+			moveRaindrop(bg.raindrops[bgRaindrop]);
+		}
 		drawBackground();
 		if (bg.menu) drawMenu();
 		checkMusic();
@@ -91,7 +102,7 @@ function controls() {
 		if (keyIsDown(RIGHT_ARROW)) cloud.dx += fps/30;
 		if (keyIsDown(UP_ARROW)) cloud.dy -= 0.5 * fps/30;
 		if (keyIsDown(DOWN_ARROW)) cloud.dy += 0.5 * fps/30;
-		if (keyIsDown(32)) console.log("spacebar");
+		cloud.raining = keyIsDown(32);
 		
 		if (mouseIsPressed){
 			var dX = mouseX - cloud.x;
@@ -172,6 +183,16 @@ function moveCloud(cloud,bgCloud){
 			cloud.y = 3/4 * windowHeight;
 		}
 	}
+	
+	//raining
+	if (cloud.raining){
+		bg.raindrops.push(new Raindrop(cloud.x,cloud.y,cloud.spreadX/4));
+	}
+}
+function moveRaindrop(raindrop){
+	raindrop.y += 10;
+	raindrop.x += wind("x");
+	if (raindrop.y > windowHeight) bg.raindrops.splice(bg.raindrops.indexOf(raindrop),1);
 }
 function wind(dimension){
 	if (dimension === "x"){
@@ -185,7 +206,7 @@ function wind(dimension){
 function drawCloud(cloud,bgOffset){
 	noStroke();
 	fill(255,255,255,50);
-	for (var i=0; i<cloud.spreadX/4; i++){
+	for (var i=0; i<cloud.spreadX/5; i++){
 		var offsetX = (noise(i + time/1000 + cloud.weight*i) - 0.5) * (cloud.spreadX - cloud.spreadX/2)/cloud.weight;
 		var offsetY = (noise(i + 20000 + time/1000 + cloud.weight*10) - 0.5) * (cloud.spreadY - cloud.spreadY/2)/cloud.weight;
 		if (!bgOffset){
@@ -195,9 +216,18 @@ function drawCloud(cloud,bgOffset){
 		}
 	}
 }
+function drawRaindrop(raindrop){
+	stroke(255);
+	line(raindrop.x,raindrop.y,raindrop.x,raindrop.y+raindrop.length);
+	noStroke();
+}
 function drawBackground(){
 	noStroke();
 	fill(100);
+	
+	for (var raindrop in bg.raindrops){
+		drawRaindrop(bg.raindrops[raindrop]);
+	}
 	
 	var spacing = 20,
 		scaleFactor = 0.1,
