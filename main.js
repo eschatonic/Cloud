@@ -209,12 +209,17 @@ function moveCloud(cloud,bgCloud){
 function moveRaindrop(raindrop){
 	raindrop.y += 10;
 	raindrop.x += wind("x");
-	var scale = windowHeight * 1/4;
-	var shift = windowHeight * 3/4;
-	var i = (raindrop.x - bg.offset.x)/bg.spacing;
-	var landHeight = noise(Math.floor(i + (bg.offset.x/bg.spacing)) * bg.scaleFactor) * scale + shift;
-	
-	if (raindrop.y > landHeight) bg.raindrops.splice(bg.raindrops.indexOf(raindrop),1);
+	if (raindrop.y > windowHeight * 3/4){
+		var scale = windowHeight * 1/4;
+		var shift = windowHeight * 3/4;
+		var i = (raindrop.x - bg.offset.x)/bg.spacing;
+		var landHeight = noise(Math.floor(i + (bg.offset.x/bg.spacing)) * bg.scaleFactor) * scale + shift;
+		
+		if (raindrop.y > landHeight){
+			bg.raindrops.splice(bg.raindrops.indexOf(raindrop),1);
+			bg.land[Math.floor(i + (bg.offset.x/bg.spacing))] = true;
+		}
+	}
 }
 function wind(dimension){
 	if (dimension === "x"){
@@ -264,6 +269,13 @@ function drawGround(){
 			(i+1) * bg.spacing - fracOffset + 1, windowHeight,
 			i * bg.spacing - fracOffset, windowHeight
 		);
+		
+		
+		if (bg.land[Math.floor(i + (bg.offset.x/bg.spacing))]){
+			stroke(0,255,0)
+			line(i * bg.spacing - fracOffset, heightA, (i+1) * bg.spacing - fracOffset + 1, heightB);
+			noStroke();
+		}
 	}
 	fill(255);
 }
