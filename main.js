@@ -16,7 +16,7 @@ var bg = {
 var debug = true;
 
 function Cloud(x,y,dx,dy,spreadX,spreadY,weight,raining){
-	this.x = x, //position on screen, not absolute
+	this.x = x,
 	this.y = y,
 	this.dx = dx,
 	this.dy = dy
@@ -26,7 +26,7 @@ function Cloud(x,y,dx,dy,spreadX,spreadY,weight,raining){
 	this.raining = raining;
 }
 function Raindrop(x,y,variance){
-	this.x = x + (Math.random() - 0.5) * variance; //position on screen, not absolute
+	this.x = x + (Math.random() - 0.5) * variance;
 	this.y = y;
 	this.length = Math.random() * 10 + 10;
 }
