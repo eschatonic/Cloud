@@ -15,7 +15,7 @@ var bg = {
 	clouds:[],
 	raindrops:[]
 }
-var debug = true;
+var debug = !(window.location.protocol === "http:" || window.location.protocol === "https://");
 
 function Cloud(x,y,dx,dy,spreadX,spreadY,weight,raining){
 	this.x = x,
