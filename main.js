@@ -276,12 +276,15 @@ function drawGround(){
 		
 		var grass = bg.land[Math.floor(i + (bg.offset.x/bg.spacing))];
 		if (grass){
+			var gl = bg.land[Math.floor(i + (bg.offset.x/bg.spacing)) - 1] ? bg.land[Math.floor(i + (bg.offset.x/bg.spacing)) - 1] : 0;
+			var gr = bg.land[Math.floor(i + (bg.offset.x/bg.spacing)) + 1] ? bg.land[Math.floor(i + (bg.offset.x/bg.spacing)) + 1] : 0;
+		
 			fill(0,255,0)
 			quad(
 				i * bg.spacing - fracOffset, heightA,
-				(i+1) * bg.spacing - fracOffset + 1, heightB,
-				(i+1) * bg.spacing - fracOffset + 1, heightB + grass,
-				i * bg.spacing - fracOffset, heightA + grass
+				(i+1) * bg.spacing - fracOffset, heightB,
+				(i+1) * bg.spacing - fracOffset, heightB + (grass + gr)/2,
+				i * bg.spacing - fracOffset, heightA + (grass + gl)/2
 			);
 			fill(100)
 		}
