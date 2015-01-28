@@ -217,10 +217,18 @@ function moveRaindrop(raindrop){
 		
 		if (raindrop.y > landHeight){
 			bg.raindrops.splice(bg.raindrops.indexOf(raindrop),1);
-			if (!bg.land[Math.floor(i + (bg.offset.x/bg.spacing))]){
-				bg.land[Math.floor(i + (bg.offset.x/bg.spacing))] = 1;
+			var l = bg.land[Math.floor(i + (bg.offset.x/bg.spacing))]
+			if (!l){
+				bg.land[Math.floor(i + (bg.offset.x/bg.spacing))] = {
+					saturation:1,
+					flooding:0
+				};
 			} else {
-				bg.land[Math.floor(i + (bg.offset.x/bg.spacing))] += 1/Math.sqrt(bg.land[Math.floor(i + (bg.offset.x/bg.spacing))]);
+				l.saturation += 1/Math.sqrt(l.saturation);
+				if (l.saturation > 10){
+					l.flooding += l.saturation - 10;
+					l.saturation = 10;
+				}
 			}
 		}
 	}
@@ -231,6 +239,22 @@ function wind(dimension){
 	} else if (dimension === "y"){
 		//return noise(time/500) - 0.5;
 		return 0;
+	}
+}
+function spreadWater(){
+	for (var section in bg.land){
+		var l = bg.land[section];
+		if (l){
+			if (l.flooding){
+				var scale = windowHeight * 1/4,
+					shift = windowHeight * 3/4;
+				var landHeightL = noise(section) * scale + shift;
+				var landHeightR = noise(section + 1) * scale + shift;
+				var slope = 1 - Math.min(landHeightL,landHeightR)/Math.max(landHeightL,landHeightR);
+				var direction = (landHeightL > landHeightR) ? -1 : 1;
+				console.log(slope,direction);
+			}
+		}
 	}
 }
 
@@ -276,16 +300,30 @@ function drawGround(){
 		
 		var grass = bg.land[Math.floor(i + (bg.offset.x/bg.spacing))];
 		if (grass){
-			var gl = bg.land[Math.floor(i + (bg.offset.x/bg.spacing)) - 1] ? bg.land[Math.floor(i + (bg.offset.x/bg.spacing)) - 1] : 0;
-			var gr = bg.land[Math.floor(i + (bg.offset.x/bg.spacing)) + 1] ? bg.land[Math.floor(i + (bg.offset.x/bg.spacing)) + 1] : 0;
+			var gl = bg.land[Math.floor(i + (bg.offset.x/bg.spacing)) - 1] ? bg.land[Math.floor(i + (bg.offset.x/bg.spacing)) - 1] : { saturation:0, flooding:0 };
+			var gr = bg.land[Math.floor(i + (bg.offset.x/bg.spacing)) + 1] ? bg.land[Math.floor(i + (bg.offset.x/bg.spacing)) + 1] : { saturation:0, flooding:0 };
 		
 			fill(0,255,0)
 			quad(
 				i * bg.spacing - fracOffset, heightA,
-				(i+1) * bg.spacing - fracOffset, heightB,
-				(i+1) * bg.spacing - fracOffset, heightB + (grass + gr)/2,
-				i * bg.spacing - fracOffset, heightA + (grass + gl)/2
+				(i+1) * bg.spacing - fracOffset + 1, heightB,
+				(i+1) * bg.spacing - fracOffset + 1, heightB + (grass.saturation + gr.saturation)/2,
+				i * bg.spacing - fracOffset, heightA + (grass.saturation + gl.saturation)/2
 			);
+			
+			fill(0,0,255)
+			if (grass.flooding){
+				var h = (heightA > heightB) ? heightA : heightB;
+				var lflood = (grass.flooding + gl.flooding)/2;
+				var rflood = (grass.flooding + gr.flooding)/2;
+				quad(
+					i * bg.spacing - fracOffset, heightA - lflood,
+					(i+1) * bg.spacing - fracOffset + 1, heightB - rflood,
+					(i+1) * bg.spacing - fracOffset + 1, heightB,
+					i * bg.spacing - fracOffset, heightA
+				);
+			}
+			
 			fill(100)
 		}
 	}
