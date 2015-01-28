@@ -15,6 +15,11 @@ var bg = {
 	clouds:[],
 	raindrops:[]
 }
+function DefaultLand(){
+	this.saturation = 1;
+	this.flooding = 0;
+};
+
 var debug = !(window.location.protocol === "http:" || window.location.protocol === "https://");
 
 function Cloud(x,y,dx,dy,spreadX,spreadY,weight,raining){
@@ -30,7 +35,7 @@ function Cloud(x,y,dx,dy,spreadX,spreadY,weight,raining){
 function Raindrop(x,y,variance){
 	this.x = x + (Math.random() - 0.5) * variance;
 	this.y = y;
-	this.length = Math.random() * 10 + 10;
+	this.l = Math.random() * 10 + 10;
 }
 
 function preload(){
@@ -83,6 +88,7 @@ function draw(){
 		background(33,142,181); //clear blue sky :)
 		
 		//objects
+		spreadWater();
 		drawGround();
 		for (var raindrop in bg.raindrops){
 			moveRaindrop(bg.raindrops[raindrop]);
@@ -215,14 +221,11 @@ function moveRaindrop(raindrop){
 		var i = (raindrop.x - bg.offset.x)/bg.spacing;
 		var landHeight = noise(Math.floor(i + (bg.offset.x/bg.spacing)) * bg.scaleFactor) * scale + shift;
 		
-		if (raindrop.y > landHeight){
+		if (raindrop.y + raindrop.l > landHeight){
 			bg.raindrops.splice(bg.raindrops.indexOf(raindrop),1);
 			var l = bg.land[Math.floor(i + (bg.offset.x/bg.spacing))]
 			if (!l){
-				bg.land[Math.floor(i + (bg.offset.x/bg.spacing))] = {
-					saturation:1,
-					flooding:0
-				};
+				bg.land[Math.floor(i + (bg.offset.x/bg.spacing))] = new DefaultLand();
 			} else {
 				l.saturation += 1/Math.sqrt(l.saturation);
 				if (l.saturation > 10){
@@ -242,20 +245,116 @@ function wind(dimension){
 	}
 }
 function spreadWater(){
+	var newLand = bg.land;
 	for (var section in bg.land){
-		var l = bg.land[section];
-		if (l){
-			if (l.flooding){
-				var scale = windowHeight * 1/4,
-					shift = windowHeight * 3/4;
-				var landHeightL = noise(section) * scale + shift;
-				var landHeightR = noise(section + 1) * scale + shift;
-				var slope = 1 - Math.min(landHeightL,landHeightR)/Math.max(landHeightL,landHeightR);
-				var direction = (landHeightL > landHeightR) ? -1 : 1;
-				console.log(slope,direction);
+		section = parseInt(section);
+		var l = bg.land[section-1] ? bg.land[section-1] : new DefaultLand();
+		var m = bg.land[section];
+		var r = bg.land[section+1] ? bg.land[section+1] : new DefaultLand();
+		if (m.flooding){
+			var scale = windowHeight * 1/4,
+				shift = windowHeight * 3/4;
+			var landHeight = {
+				"-1":(1 - noise((section-1) * bg.scaleFactor)) * scale,
+				"0":(1 - noise((section) * bg.scaleFactor)) * scale,
+				"1":(1 - noise((section+1) * bg.scaleFactor)) * scale,
+				"2":(1 - noise((section+2) * bg.scaleFactor)) * scale
+			};
+
+			var floodL = calcWaterLevel(landHeight["-1"],landHeight["0"],l.flooding);
+			var floodM = calcWaterLevel(landHeight["0"],landHeight["1"],m.flooding);
+			var floodR = calcWaterLevel(landHeight["1"],landHeight["2"],r.flooding);
+			
+			if (floodM > floodL && floodM < floodR){
+				//flow left
+				if (floodM > landHeight["0"]){
+					if (!newLand[section-1]) newLand[section-1] = new DefaultLand();
+					var w = Math.random(floodM - floodL)/2
+					newLand[section-1].flooding += w;
+					newLand[section].flooding -= w;
+				}
+			} else if (floodM > floodR && floodM < floodL) {
+				//flow right
+				if (floodM > landHeight["1"]){
+					if (!newLand[section+1]) newLand[section+1] = new DefaultLand();
+					var w = Math.random(floodM - floodR)/2
+					newLand[section+1].flooding += w;
+					newLand[section].flooding -= w;
+				}
+			} else if (floodM > floodR && floodM > floodL) {
+				if (floodM < landHeight["1"]){
+					//left only
+					if (!newLand[section-1]) newLand[section-1] = new DefaultLand();
+					var w = Math.random(floodM - floodL)/2
+					newLand[section-1].flooding += w;
+					newLand[section].flooding -= w;
+				} else if (floodM < landHeight["0"]){
+					//right only
+					if (!newLand[section+1]) newLand[section+1] = new DefaultLand();
+					var w = Math.random(floodM - floodR)/2
+					newLand[section+1].flooding += w;
+					newLand[section].flooding -= w;
+				} else {
+					//spill
+					var diffL = floodM - floodL;
+					var diffR = floodM - floodR;
+					var w = Math.random(diffL + diffR)/2;
+					newLand[section].flooding -= w;
+					if (!newLand[section-1]) newLand[section-1] = new DefaultLand();
+					if (!newLand[section+1]) newLand[section+1] = new DefaultLand();
+					newLand[section-1].flooding += w * diffL/(diffL+diffR);
+					newLand[section+1].flooding += w * diffR/(diffL+diffR);
+				}
 			}
+			
+			/*
+			var landL = (landHeight["-1"] + landHeight["0"])/2,
+				landM = (landHeight["0"] + landHeight["1"])/2,
+				landR = (landHeight["1"] + landHeight["2"])/2;
+			if (landL + l.flooding < landM + m.flooding || landR + r.flooding < landM + m.flooding){
+				if (landL + l.flooding < landM + m.flooding){
+					if (landR + r.flooding < landM + m.flooding){
+						//flow both
+						var diffL = (landM + m.flooding) - (landL + l.flooding);
+						var diffR = (landM + m.flooding) - (landR + r.flooding);
+						var w = m.flooding/2;
+						if (!newLand[section-1]) newLand[section-1] = new DefaultLand();
+						if (!newLand[section+1]) newLand[section+1] = new DefaultLand();
+						newLand[section-1].flooding += w * diffL/(diffL+diffR);
+						newLand[section+1].flooding += w * diffR/(diffL+diffR);
+						newLand[section].flooding -= w;
+					} else {
+						//flow left
+						var w = (landM + m.flooding) - (landL + l.flooding);
+						if (!newLand[section-1]) newLand[section-1] = new DefaultLand();
+						newLand[section-1].flooding += w/2;
+						newLand[section].flooding -= w/2;
+					}
+				} else {
+					//flow right
+					var w = (landM + m.flooding) - (landR + r.flooding);
+					if (!newLand[section+1]) newLand[section+1] = new DefaultLand();
+					newLand[section+1].flooding += w/2;
+					newLand[section].flooding -= w/2;
+				}
+			}
+			*/
 		}
 	}
+	bg.land = $.extend([], newLand);
+}
+
+function calcWaterLevel(left,right,flooding){
+	var level = Math.min(left,right);
+	var diff = Math.abs(left-right);
+	if (flooding * 2 <= diff){
+		level += flooding * 2;
+	} else {
+		level += diff;
+		flooding -= diff/2;
+		level += flooding;
+	}
+	return level
 }
 
 function drawCloud(cloud,isBackgroundCloud){
@@ -274,13 +373,12 @@ function drawCloud(cloud,isBackgroundCloud){
 function drawRaindrop(raindrop){
 	if (raindrop){
 		stroke(128,218,235);
-		line(raindrop.x - bg.offset.x,raindrop.y,raindrop.x - bg.offset.x,raindrop.y+raindrop.length);
+		line(raindrop.x - bg.offset.x,raindrop.y,raindrop.x - bg.offset.x,raindrop.y+raindrop.l);
 		noStroke();
 	}
 }
 function drawGround(){
 	noStroke();
-	fill(100);
 	
 	var scale = windowHeight * 1/4;
 	var shift = windowHeight * 3/4;
@@ -291,18 +389,40 @@ function drawGround(){
 		var heightA = noise(Math.floor(i + (bg.offset.x/bg.spacing)) * bg.scaleFactor) * scale + shift;
 		var heightB = noise(Math.floor(i+1 + (bg.offset.x/bg.spacing)) * bg.scaleFactor) * scale + shift;
 		
-		quad(
-			i * bg.spacing - fracOffset, heightA,
-			(i+1) * bg.spacing - fracOffset + 1,heightB,
-			(i+1) * bg.spacing - fracOffset + 1, windowHeight,
-			i * bg.spacing - fracOffset, windowHeight
-		);
-		
 		var grass = bg.land[Math.floor(i + (bg.offset.x/bg.spacing))];
 		if (grass){
-			var gl = bg.land[Math.floor(i + (bg.offset.x/bg.spacing)) - 1] ? bg.land[Math.floor(i + (bg.offset.x/bg.spacing)) - 1] : { saturation:0, flooding:0 };
-			var gr = bg.land[Math.floor(i + (bg.offset.x/bg.spacing)) + 1] ? bg.land[Math.floor(i + (bg.offset.x/bg.spacing)) + 1] : { saturation:0, flooding:0 };
-		
+			var gl = bg.land[Math.floor(i + (bg.offset.x/bg.spacing)) - 1] ? bg.land[Math.floor(i + (bg.offset.x/bg.spacing)) - 1] : new DefaultLand();
+			var gr = bg.land[Math.floor(i + (bg.offset.x/bg.spacing)) + 1] ? bg.land[Math.floor(i + (bg.offset.x/bg.spacing)) + 1] : new DefaultLand();
+			
+			fill(0,0,255)
+			if (grass.flooding){
+				var hM = Math.min(heightA,heightB);
+				var h = (heightA + heightB)/2;
+				
+				var heightL = noise(Math.floor(i-1 + (bg.offset.x/bg.spacing)) * bg.scaleFactor) * scale + shift;
+				var heightR = noise(Math.floor(i+2 + (bg.offset.x/bg.spacing)) * bg.scaleFactor) * scale + shift;
+				var hl = (heightA + heightL)/2;
+				var hr = (heightB + heightR)/2;
+				
+				//water goes underneath everything else
+				quad(
+					i * bg.spacing - fracOffset, ((h - grass.flooding) + (hl - gl.flooding))/2,
+					(i+1) * bg.spacing - fracOffset + 1, ((h - grass.flooding) + (hr - gr.flooding))/2,
+					(i+1) * bg.spacing - fracOffset + 1, heightB,
+					i * bg.spacing - fracOffset, heightA
+				);
+			}
+			
+			//first the ground
+			fill(100);
+			quad(
+				i * bg.spacing - fracOffset, heightA,
+				(i+1) * bg.spacing - fracOffset + 1,heightB,
+				(i+1) * bg.spacing - fracOffset + 1, windowHeight,
+				i * bg.spacing - fracOffset, windowHeight
+			);
+			
+			//now the grass
 			fill(0,255,0)
 			quad(
 				i * bg.spacing - fracOffset, heightA,
@@ -310,22 +430,18 @@ function drawGround(){
 				(i+1) * bg.spacing - fracOffset + 1, heightB + (grass.saturation + gr.saturation)/2,
 				i * bg.spacing - fracOffset, heightA + (grass.saturation + gl.saturation)/2
 			);
-			
-			fill(0,0,255)
-			if (grass.flooding){
-				var h = (heightA > heightB) ? heightA : heightB;
-				var lflood = (grass.flooding + gl.flooding)/2;
-				var rflood = (grass.flooding + gr.flooding)/2;
-				quad(
-					i * bg.spacing - fracOffset, heightA - lflood,
-					(i+1) * bg.spacing - fracOffset + 1, heightB - rflood,
-					(i+1) * bg.spacing - fracOffset + 1, heightB,
-					i * bg.spacing - fracOffset, heightA
-				);
-			}
-			
-			fill(100)
+		} else {
+			//just the ground
+			fill(100);
+			quad(
+				i * bg.spacing - fracOffset, heightA,
+				(i+1) * bg.spacing - fracOffset + 1,heightB,
+				(i+1) * bg.spacing - fracOffset + 1, windowHeight,
+				i * bg.spacing - fracOffset, windowHeight
+			);
 		}
+		
+		
 	}
 	fill(255);
 }
